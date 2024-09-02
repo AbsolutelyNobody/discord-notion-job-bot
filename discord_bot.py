@@ -68,9 +68,9 @@ async def get_notion_pages() -> List[dict]:
         ).get("results")
         last_checked = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         logger.info(f"Last checked at: {last_checked}")
-        logger.info(f"Database ID: {DATABASE_ID}")
+        logger.info(f"Database ID: {DATABASE_ID}") #still more testing, but this could stay
         logger.debug(pages)
-        print(len(pages))
+        print(len(pages)) #why have i started my comments at the bottom? no idea, also testing
         return pages
     except Exception as e:
         logger.error(f"Error fetching pages from Notion: {e}")
@@ -96,11 +96,11 @@ async def poll_notion_database() -> None:
     """
     while True:
         pages = await get_notion_pages()
-        print("Got notion pages")
+        print("Got notion pages") #also testing
         channel = bot.get_channel(DISCORD_CHANNEL_ID)
-        print(f"Discord ID: {DISCORD_CHANNEL_ID}")
+        print(f"Discord ID: {DISCORD_CHANNEL_ID}") #just for testing
         for page in pages:
-            print(f"Page: {page}")
+            print(f"Page: {page}") #debug stuff, make SURE to remove this it is a illegible nightmare
             message = format_page_message(page)
             try:
                 await channel.send(message)
