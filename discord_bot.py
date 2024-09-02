@@ -1,6 +1,6 @@
 import os
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from typing import List
 
@@ -25,7 +25,7 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(
     logging.Formatter("%(asctime)s %(levelname)s %(message)s", "%Y-%m-%d %H:%M:%S")
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) #name of the logger instance (i think)
 logger.setLevel(LOGLEVEL)
 logger.addHandler(console_handler)
 
@@ -39,7 +39,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 notion = Client(auth=NOTION_API_KEY)
 
 # Store the last checked timestamp
-last_checked = datetime.utcnow().replace(microsecond=0).isoformat()
+last_checked = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 async def get_notion_pages() -> List[dict]:
@@ -56,19 +56,25 @@ async def get_notion_pages() -> List[dict]:
                 "filter": {
                     "and": [
                         {
+                            
+                            #Original timestamp check, but timestamp isn't listed as a property in notion docs
                             "timestamp": "last_edited_time",
                             "last_edited_time": {"after": last_checked},
+                            
                         }
                     ]
                 },
             }
         ).get("results")
-        last_checked = datetime.utcnow().replace(microsecond=0).isoformat()
+        last_checked = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         logger.info(f"Last checked at: {last_checked}")
+        logger.info(f"Database ID: {DATABASE_ID}")
         logger.debug(pages)
+        print(len(pages))
         return pages
     except Exception as e:
         logger.error(f"Error fetching pages from Notion: {e}")
+        print(f"Error fetching pages from Notion: {e}")
         return []
 
 
@@ -79,8 +85,8 @@ def format_page_message(page: dict) -> str:
     :param page: The Notion page.
     :return: The formatted message.
     """
-    title = page["properties"]["Name"]["title"][0]["text"]["content"]
-    message = f"**New Update:** {title}\n"
+    title = page["properties"]["Company"]["title"][0]["text"]["content"]
+    message = f"New Application: {title}\n"
     return message
 
 
@@ -90,14 +96,17 @@ async def poll_notion_database() -> None:
     """
     while True:
         pages = await get_notion_pages()
+        print("Got notion pages")
         channel = bot.get_channel(DISCORD_CHANNEL_ID)
+        print(f"Discord ID: {DISCORD_CHANNEL_ID}")
         for page in pages:
+            print(f"Page: {page}")
             message = format_page_message(page)
             try:
                 await channel.send(message)
             except Exception as e:
                 logger.error(f"Error sending message to Discord: {e}")
-        await asyncio.sleep(120)  # Poll every N seconds
+        await asyncio.sleep(POLL_INTERVAL)  # Poll every N seconds
 
 
 @bot.event
