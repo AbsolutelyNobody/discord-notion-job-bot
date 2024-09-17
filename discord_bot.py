@@ -86,7 +86,12 @@ def format_page_message(page: dict) -> str:
     :return: The formatted message.
     """
     title = page["properties"]["Company"]["title"][0]["text"]["content"]
-    message = f"New Application: {title}\n"
+    status = page["properties"]["Status"]["status"]["name"]
+    try:
+        location = page["properties"]["Location"]["rich_text"][0]["text"]["content"]
+        message = f"Update: {title}\n Status: {status}\n Location: {location}"
+    except:
+        message = f"Update: {title}\n Status: {status}\n"
     return message
 
 
